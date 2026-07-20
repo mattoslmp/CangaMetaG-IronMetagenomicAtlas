@@ -17,62 +17,6 @@ The repository contains the complete Streamlit application, independent analysis
 
 The app covers taxonomic profiles, alpha and beta diversity, NMDS, redundancy analysis, KO biomarkers, differential abundance, KEGG/KEMET module completeness, FeGenie summaries, MAG quality and taxonomy, antiSMASH biosynthetic gene clusters, ST8 comparisons and environmental integration.
 
-## Canonical RDA model
-
-The repository preserves the exact article RDA implementation and the exact figure files used in the submission package.
-
-The canonical all-community genus-level RDA used for Supplementary Figure 17 and for the default interactive model is implemented in:
-
-```text
-scripts/consolidate_final_publication.py
-```
-
-The domain-separated RDA panels embedded in Main Figures 4 and 5 are implemented in:
-
-```text
-scripts/generate_final_domain_taxonomy_figures.py
-```
-
-Both scripts use the same packaged inputs:
-
-```text
-data/resultado.cds.otu.tab
-data/resultado.cds.tax.tab
-data/fiqui2.xlsx
-```
-
-The workflow pools dry- and rainy-season CDS counts by the ten sampling positions, averages physicochemical replicates by `SampleMM`, applies a Hellinger transformation to the community matrix, standardizes environmental predictors and fits the constrained model with 999 permutations.
-
-Predictors are evaluated in the article-defined order and filtered for absolute pairwise correlation below 0.92 until six predictors are retained. With the packaged data, the final model is:
-
-```text
-Fe2O3, SiO2, Al2O3, TOT/S, Cu, Pb
-```
-
-Cu and Pb are the trace-metal predictors retained in the model. The interactive RDA uses the same predictor-selection logic and defaults to the same six-variable manuscript model. The original R workflow is preserved as `scripts/RDA_Taxon_env_Gi.R`.
-
-The RDA-containing files in `outputs/final_publication_figures/` and `outputs/app_supplementary_figures/` are synchronized byte-for-byte with the article package.
-
-## Repository layout
-
-```text
-.
-├── app.py                         Streamlit entry point
-├── src/                           Reusable application modules
-├── scripts/                       Independent analysis and figure scripts
-├── data/                          Processed input and source-data tables
-├── tables/                        Supplementary Tables 1-11 and audit tables
-├── outputs/
-│   ├── final_publication_figures/ Main and supplementary publication figures
-│   ├── app_supplementary_figures/ Numbered figures displayed by the app
-│   └── kegg_modules/              KEGG/KEMET outputs
-├── assets/                        Institutional visual assets
-├── database/                      Local application database layer
-├── validation/                    Checksums and validation reports
-├── environment.yml                Conda environment
-├── requirements.txt               Python dependencies
-└── RUN_APP_AND_REPRODUCE_FIGURES.md
-```
 
 ## Installation
 
