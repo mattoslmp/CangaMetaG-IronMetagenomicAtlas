@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "Please cite the associated manuscript and this repository."
+title: "Iron-rich Amazonian lateritic lake sediments harbor diverse microbial communities with biogeochemical potential relevant to carbon and methane cycling"
+type: software
+authors:
+  - given-names: "Leandro"
+    family-names: "de Mattos Pereira"
+  - given-names: "José Augusto"
+    family-names: "Pires Bittencourt"
+  - given-names: "Vitor Cirilo"
+    family-names: "Araujo Santos"
+  - given-names: "Ronnie"
+    family-names: "Alves"
+  - given-names: "Eder"
+    family-names: "Pires"
+  - given-names: "Prafulla Kumar"
+    family-names: "Sahoo"
+  - given-names: "José Tasso"
+    family-names: "Felix Guimarães"
+  - given-names: "Bruno Garcia"
+    family-names: "Simões"
+  - given-names: "Renato R."
+    family-names: "Moreira-Oliveira"
+  - given-names: "Guilherme"
+    family-names: "Oliveira"
+  - given-names: "Gisele"
+    family-names: "Lopes Nunes"
+date-released: 2026-07-19
+repository-code: "https://github.com/mattoslmp/CangaMetaG-IronMetagenomicAtlas"
+keywords:
+  - metagenomics
+  - redundancy analysis
+  - iron metabolism
+  - Amazonian lateritic lakes
+  - Streamlit
+identifiers:
+  - type: other
+    value: "ERP137391"
+    description: "European Nucleotide Archive study accession"
+notes: "Software and reproducibility repository for a manuscript prepared for submission to The ISME Journal on 19 July 2026."
