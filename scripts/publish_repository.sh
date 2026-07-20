@@ -10,6 +10,7 @@ trap 'rm -rf "$WORKDIR"' EXIT
 
 command -v git >/dev/null || { echo "git is required" >&2; exit 1; }
 command -v rsync >/dev/null || { echo "rsync is required" >&2; exit 1; }
+command -v python3 >/dev/null || { echo "python3 is required" >&2; exit 1; }
 
 echo "Cloning $REMOTE ($BRANCH)..."
 git clone --branch "$BRANCH" --single-branch "$REMOTE" "$WORKDIR/repository"
@@ -26,13 +27,53 @@ rsync -a --delete \
 
 cd "$WORKDIR/repository"
 
-python - <<'PY'
+# GitHub rejects individual blobs >=100 MB. Split any such optional archive or
+# dataset into deterministic parts and retain a checksum for reconstruction.
+python3 - <<'PY'
+from __future__ import annotations
+
+import hashlib
+import math
 from pathlib import Path
-limit = 100 * 1024 * 1024
-oversized = [(p.stat().st_size, p) for p in Path('.').rglob('*') if p.is_file() and '.git' not in p.parts and p.stat().st_size >= limit]
+
+root = Path('.')
+hard_limit = 100 * 1024 * 1024
+part_size = 90 * 1024 * 1024
+large_files = [
+  path for path in root.rglob('*')
+  if path.is_file()
+  and '.git' not in path.parts
+  and '.part' not in path.name
+  and path.stat().st_size >= hard_limit
+]
+
+for path in large_files:
+  size = path.stat().st_size
+  count = math.ceil(size / part_size)
+  digest = hashlib.sha256()
+  print(f'Splitting {path} ({size / 1024 / 1024:.2f} MB) into {count} parts...')
+  with path.open('rb') as source:
+    for number in range(1, count + 1):
+      data = source.read(part_size)
+      if not data:
+        raise RuntimeError(f'Unexpected end of file while splitting {path}')
+      digest.update(data)
+      part = path.with_name(f'{path.name}.part{number:03d}-of-{count:03d}')
+      part.write_bytes(data)
+    if source.read(1):
+      raise RuntimeError(f'Unwritten data remains for {path}')
+  path.with_name(path.name + '.sha256').write_text(
+    f'{digest.hexdigest()}  {path.name}\n', encoding='utf-8'
+  )
+  path.unlink()
+
+oversized = [
+  path for path in root.rglob('*')
+  if path.is_file() and '.git' not in path.parts and path.stat().st_size >= hard_limit
+]
 if oversized:
-  for size, path in sorted(oversized, reverse=True):
-    print(f"ERROR: {path} is {size / 1024 / 1024:.2f} MB and exceeds GitHub's file limit")
+  for path in oversized:
+    print(f"ERROR: {path} remains above GitHub's 100 MB limit")
   raise SystemExit(1)
 print('GitHub file-size validation: PASS')
 PY
