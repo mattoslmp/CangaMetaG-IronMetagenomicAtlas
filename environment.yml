@@ -1,0 +1,19 @@
+name: gangametag-iron-atlas
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - streamlit
+  - pandas
+  - numpy
+  - plotly
+  - scipy
+  - scikit-learn
+  - pillow
+  - requests
+  - openpyxl
+  - matplotlib
+  - pip
+  - pip:
+      - python-docx
+      - PyMuPDF
