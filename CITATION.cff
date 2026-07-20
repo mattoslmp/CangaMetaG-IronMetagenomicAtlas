@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "Please cite the associated manuscript and this repository."
-title: "Iron-rich Amazonian lateritic lake sediments harbor diverse microbial communities with biogeochemical potential relevant to carbon and methane cycling"
+title: "An iron metagenomic atlas reveals biogeochemical cycling potential in Amazonian lateritic lake sediments"
 type: software
 authors:
   - given-names: "Leandro"
@@ -27,14 +27,7 @@ authors:
     family-names: "Lopes Nunes"
 date-released: 2026-07-19
 repository-code: "https://github.com/mattoslmp/CangaMetaG-IronMetagenomicAtlas"
-keywords:
-  - metagenomics
-  - redundancy analysis
-  - iron metabolism
-  - Amazonian lateritic lakes
-  - Streamlit
 identifiers:
   - type: other
     value: "ERP137391"
     description: "European Nucleotide Archive study accession"
-notes: "Software and reproducibility repository for a manuscript prepared for submission to The ISME Journal on 19 July 2026."
