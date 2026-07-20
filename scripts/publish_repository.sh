@@ -4,18 +4,27 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REMOTE="${GITHUB_REMOTE:-https://github.com/mattoslmp/CangaMetaG-IronMetagenomicAtlas.git}"
 BRANCH="${GITHUB_BRANCH:-main}"
-COMMIT_MESSAGE="${GITHUB_COMMIT_MESSAGE:-Publish CangaMetaG app, scripts, data and publication assets}"
+COMMIT_MESSAGE="${GITHUB_COMMIT_MESSAGE:-Deposit complete original app with article-consistent RDA}"
 WORKDIR="$(mktemp -d -t cangametag-publish-XXXXXX)"
 trap 'rm -rf "$WORKDIR"' EXIT
 
-command -v git >/dev/null || { echo "git is required" >&2; exit 1; }
-command -v rsync >/dev/null || { echo "rsync is required" >&2; exit 1; }
-command -v python3 >/dev/null || { echo "python3 is required" >&2; exit 1; }
+for command in git git-lfs rsync; do
+  command -v "$command" >/dev/null || {
+    echo "$command is required" >&2
+    echo "Ubuntu: sudo apt update && sudo apt install -y git git-lfs rsync" >&2
+    exit 1
+  }
+done
+
+git lfs install
 
 echo "Cloning $REMOTE ($BRANCH)..."
 git clone --branch "$BRANCH" --single-branch "$REMOTE" "$WORKDIR/repository"
 
-rsync -a --delete \
+# Preserve the remote .git history, but replace the working tree with the exact
+# application directory from which this script is executed.
+find "$WORKDIR/repository" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+rsync -a \
   --exclude='.git/' \
   --exclude='.venv/' \
   --exclude='venv/' \
@@ -27,58 +36,12 @@ rsync -a --delete \
 
 cd "$WORKDIR/repository"
 
-# GitHub rejects individual blobs >=100 MB. Split any such optional archive or
-# dataset into deterministic parts and retain a checksum for reconstruction.
-python3 - <<'PY'
-from __future__ import annotations
-
-import hashlib
-import math
-from pathlib import Path
-
-root = Path('.')
-hard_limit = 100 * 1024 * 1024
-part_size = 90 * 1024 * 1024
-large_files = [
-  path for path in root.rglob('*')
-  if path.is_file()
-  and '.git' not in path.parts
-  and '.part' not in path.name
-  and path.stat().st_size >= hard_limit
-]
-
-for path in large_files:
-  size = path.stat().st_size
-  count = math.ceil(size / part_size)
-  digest = hashlib.sha256()
-  print(f'Splitting {path} ({size / 1024 / 1024:.2f} MB) into {count} parts...')
-  with path.open('rb') as source:
-    for number in range(1, count + 1):
-      data = source.read(part_size)
-      if not data:
-        raise RuntimeError(f'Unexpected end of file while splitting {path}')
-      digest.update(data)
-      part = path.with_name(f'{path.name}.part{number:03d}-of-{count:03d}')
-      part.write_bytes(data)
-    if source.read(1):
-      raise RuntimeError(f'Unwritten data remains for {path}')
-  path.with_name(path.name + '.sha256').write_text(
-    f'{digest.hexdigest()}  {path.name}\n', encoding='utf-8'
-  )
-  path.unlink()
-
-oversized = [
-  path for path in root.rglob('*')
-  if path.is_file() and '.git' not in path.parts and path.stat().st_size >= hard_limit
-]
-if oversized:
-  for path in oversized:
-    print(f"ERROR: {path} remains above GitHub's 100 MB limit")
-  raise SystemExit(1)
-print('GitHub file-size validation: PASS')
-PY
-
+# Preserve the original filename and path of the only application file above
+# GitHub's normal 100 MB blob limit.
+git lfs track "data/kegg_modules/raw_uploaded_archives/antismash(1)(1).zip"
+git add .gitattributes
 git add -A
+
 if git diff --cached --quiet; then
   echo "No repository changes to publish."
   exit 0
@@ -86,4 +49,4 @@ fi
 
 git commit -m "$COMMIT_MESSAGE"
 git push origin "$BRANCH"
-echo "Repository published successfully: $REMOTE"
+echo "Complete application published successfully: $REMOTE"
